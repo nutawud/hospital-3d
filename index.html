@@ -60,14 +60,17 @@ function makeWindow(parent,x,y,z,w,h){
  const frame=mat('#d9e4e9');box(parent,x-w/2,y-h/2,z-.045,.055,h,.08,frame);box(parent,x+w/2-.055,y-h/2,z-.045,.055,h,.08,frame);box(parent,x,y+h/2-.045,z-.045,w,.055,.08,frame);
 }
 function makeTextSprite(lines,opts={}){
- const c=document.createElement('canvas'),cx=c.getContext('2d');c.width=640;c.height=160;
- cx.fillStyle='#ffffff';cx.strokeStyle='#d5dfe4';cx.lineWidth=4;
- cx.beginPath();cx.roundRect(8,8,624,144,18);cx.fill();cx.stroke();
- cx.fillStyle='#253e4e';cx.font='bold 30px sans-serif';cx.textAlign='center';cx.textBaseline='middle';
- cx.fillText(lines[0]||'',320,52);
- cx.font='23px sans-serif';cx.fillStyle='#536b79';
- cx.fillText(lines[1]||'',320,102);
+ // Render label textures at 2x resolution so text remains crisp in the 3D scene.
+ const c=document.createElement('canvas'),cx=c.getContext('2d');c.width=1280;c.height=320;
+ cx.fillStyle='#ffffff';cx.strokeStyle='#d5dfe4';cx.lineWidth=8;
+ cx.beginPath();cx.roundRect(16,16,1248,288,36);cx.fill();cx.stroke();
+ cx.fillStyle='#253e4e';cx.font='bold 60px sans-serif';cx.textAlign='center';cx.textBaseline='middle';
+ cx.fillText(lines[0]||'',640,104);
+ cx.font='46px sans-serif';cx.fillStyle='#536b79';
+ cx.fillText(lines[1]||'',640,204);
  const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;
+ tex.anisotropy=renderer.capabilities.getMaxAnisotropy();
+ tex.generateMipmaps=true;tex.minFilter=THREE.LinearMipmapLinearFilter;tex.magFilter=THREE.LinearFilter;
  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(opts.w||3.4,opts.h||.85),new THREE.MeshBasicMaterial({map:tex,transparent:true,side:THREE.DoubleSide,depthWrite:false}));
  mesh.renderOrder=5;return mesh;
 }
