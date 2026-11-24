@@ -16,7 +16,7 @@ h2{font-size:13px;color:#526b7c;margin:0 0 8px}.building-list{display:grid;gap:7
 .hud{position:absolute;left:14px;top:14px;background:#ffffffed;border:1px solid #e0e9ee;border-radius:11px;padding:10px 13px;pointer-events:none}.hud b{display:block;font-size:12px}.hud span{font-size:10px;color:#718592}.hint{position:absolute;right:14px;bottom:14px;background:#ffffffd9;border-radius:9px;padding:8px 10px;color:#6b8290;font-size:10px;pointer-events:none}
 .status{position:absolute;right:14px;top:14px;background:#ffffffed;border:1px solid #e0e9ee;border-radius:10px;padding:8px 11px;font-size:11px;color:#6a8190}
 @media(max-width:850px){body{overflow:auto}.app{width:96vw;height:auto;min-height:0;margin:2vh auto;grid-template-columns:1fr}.panel{order:2}.main{height:72vh;min-height:0}.stage{min-height:0}}
- #patientDetailModal[hidden]{display:none}</style></head><body>
+ #patientDetailModal[hidden]{display:none}.floorRoster{display:none!important}\n</style></head><body>
 <div class="app">
 <aside class="panel">
 <div class="brand"><div class="logo">+</div><div><h1>Patient Flow 3D</h1><div class="sub">โรงพยาบาลจำลอง • มุมมอง 3 มิติ</div></div></div>
@@ -286,20 +286,8 @@ function addOpdVisitor(startInside=false){
 for(let i=0;i<8;i++)addOpdVisitor(i>=4);
 
 function updateStats(){document.getElementById('peopleNum').textContent=people.length;document.getElementById('waitingNum').textContent=people.filter(p=>p.userData.wait>0).length}
-buildings.forEach((b,i)=>{let el=document.createElement('button');el.className='building'+(i===0?' active':'');el.innerHTML='<span class="swatch" style="background:'+b.color+'"></span><span><strong>'+b.name+'</strong><small>'+b.floorText.join(' / ')+'</small></span>';el.onclick=()=>{document.querySelectorAll('.building').forEach(x=>x.classList.remove('active'));el.classList.add('active');selectedBuilding=b;selectedFloor=-1;applyFloorVisibility();target.set(b.x,b.floors*levelH*.38,b.z);radius=25;updateCamera();showFloorControls(b)};document.getElementById('buildingList').appendChild(el)});
-let selectedBuilding=buildings[0],selectedFloor=-1;
-function updateFloorCount(b,f){
- const holder=document.getElementById('floorControls');
- let card=holder.querySelector('.floorCount');
- if(!card){card=document.createElement('div');card.className='floorCount';holder.appendChild(card);}
- const total=b.floorPeopleCounts.reduce((sum,n)=>sum+n,0);
- if(f<0){
-   card.innerHTML='จำนวนคนจำลองทั้งอาคาร <strong>'+total+' คน</strong><small>รวมทุกชั้น • ตัวเลขจำลองเพื่อแสดงภาพรวม</small>';
- }else{
-   const floorLabel='ชั้น '+(f+1);
-   card.innerHTML=floorLabel+' <strong>'+b.floorPeopleCounts[f]+' คน</strong><small>จำนวนคนจำลองบนชั้นนี้ • ไม่ใช่ข้อมูลผู้ป่วยจริง</small>';
- }
-}
+buildings.forEach((b,i)=>{let el=document.createElement('button');el.className='building';el.innerHTML='<span class="swatch" style="background:'+b.color+'"></span><span><strong>'+b.name+'</strong><small>'+b.floorText.join(' / ')+'</small></span>';el.onclick=()=>{document.querySelectorAll('.building').forEach(x=>x.classList.remove('active'));if(selectedBuilding && selectedBuilding.id===b.id){selectedBuilding=null;selectedFloor=-1;applyFloorVisibility();target.set(-2,1.5,0);radius=39;theta=.72;phi=1.02;updateCamera();selectedBuilding=null;selectedFloor=-1;applyFloorVisibility();document.getElementById('floorControls').innerHTML='';return;}el.classList.add('active');selectedBuilding=b;selectedFloor=-1;applyFloorVisibility();target.set(b.x,b.floors*levelH*.38,b.z);radius=25;updateCamera();showFloorControls(b)};document.getElementById('buildingList').appendChild(el)});
+let selectedBuilding=null,selectedFloor=-1;
 function updateFloorRoster(b,f){
  const holder=document.getElementById('floorControls');
  let roster=holder.querySelector('.floorRoster');
@@ -323,7 +311,7 @@ function updateFloorRoster(b,f){
    note='<div class="muted">ข้อมูลสมมติสำหรับสาธิต ไม่ใช่รายชื่อหรือข้อมูลผู้ป่วยจริง</div>';
  }
  const overlayContent='<div class="overlayHead"><h3>'+heading+'</h3><button class="closeOverlay" type="button" aria-label="ปิด">ปิด ✕</button></div>'+items+note;
- roster.innerHTML=heading+'<div>'+items+'</div>'+note;
+ roster.innerHTML='';
  overlay.innerHTML=overlayContent;overlay.hidden=false;
  overlay.querySelector('.closeOverlay').onclick=()=>overlay.hidden=true;
 }
@@ -379,51 +367,47 @@ function showPatientDetails(b,patient){
  patientModalShell('ข้อมูลผู้ป่วยจำลอง',content,patient.arrivalTime);
 }
 function applyFloorVisibility(){
- // When a specific floor is selected, isolate that building and that floor.
+ const allBuildings=!selectedBuilding;
  roomGroups.forEach(record=>{
-   const isSelectedBuilding=record.building.id===selectedBuilding.id;
-   record.group.visible=(selectedFloor<0 ? true : isSelectedBuilding);
+   const isSelectedBuilding=!allBuildings && record.building.id===selectedBuilding.id;
+   record.group.visible=allBuildings || isSelectedBuilding;
    record.floorGroups.forEach((g,i)=>{
-     g.visible=(selectedFloor<0 || !isSelectedBuilding) ? true : i===selectedFloor;
+     g.visible=allBuildings || !isSelectedBuilding || selectedFloor<0 || i===selectedFloor;
    });
-   // Hide roof, stair core and exterior extras while viewing an individual floor.
    record.group.children.forEach(child=>{
-     if(!record.floorGroups.includes(child)) child.visible=(selectedFloor<0);
+     if(!record.floorGroups.includes(child)) child.visible=allBuildings || !isSelectedBuilding || selectedFloor<0;
    });
  });
  people.forEach(p=>{
-   if(selectedFloor<0){p.visible=true;return;}
-   // For OPD floor 1, show only visitors currently inside the OPD floor footprint.
-   const insideOpdFloor1=selectedBuilding.id==='opd' && selectedFloor===0 && p.userData.opdFlow &&
-     p.position.x>=selectedBuilding.x-selectedBuilding.w/2 &&
-     p.position.x<=selectedBuilding.x+selectedBuilding.w/2 &&
-     p.position.z>=selectedBuilding.z-selectedBuilding.d/2 &&
-     p.position.z<=selectedBuilding.z+selectedBuilding.d/2;
-   p.visible=insideOpdFloor1;
+   if(allBuildings){p.visible=true;return;}
+   const b=selectedBuilding;
+   const inSelectedBuilding=p.position.x>=b.x-b.w/2 && p.position.x<=b.x+b.w/2 &&
+     p.position.z>=b.z-b.d/2 && p.position.z<=b.z+b.d/2;
+   if(selectedFloor<0){p.visible=inSelectedBuilding;return;}
+   const inSelectedFloor=b.id==='opd' && selectedFloor===0 && p.userData.opdFlow && inSelectedBuilding;
+   p.visible=inSelectedFloor;
  });
 }
 function selectFloor(b,f){
- selectedBuilding=b;selectedFloor=f;
+ selectedBuilding=(f<0?null:b);selectedFloor=f;
  applyFloorVisibility();
  const holder=document.getElementById('floorControls');
  holder.querySelectorAll('.floorBtn').forEach((x,i)=>x.classList.toggle('active',i===(f<0?0:f+1)));
- updateFloorCount(b,f);
  updateFloorRoster(b,f);
  if(f>=0){target.set(b.x,(f+.6)*levelH,b.z);radius=15;updateCamera()}
 }
 function showFloorControls(b){
  selectedBuilding=b;selectedFloor=-1;
  const holder=document.getElementById('floorControls');holder.innerHTML='';
- const all=document.createElement('button');all.className='floorBtn active';all.textContent='อาคารทั้งหมด';all.onclick=()=>selectFloor(b,-1);holder.appendChild(all);
+ const all=document.createElement('button');all.className='floorBtn active';all.textContent='อาคารทั้งหมด';all.onclick=()=>{selectedBuilding=null;selectedFloor=-1;applyFloorVisibility();holder.querySelectorAll('.floorBtn').forEach(x=>x.classList.remove('active'));all.classList.add('active');updateFloorRoster(b,-1)};holder.appendChild(all);
  for(let f=0;f<b.floors;f++){
    const btn=document.createElement('button');btn.className='floorBtn';btn.textContent='ชั้น '+(f+1);
    btn.onclick=()=>selectFloor(b,f);
    holder.appendChild(btn);
  }
- updateFloorCount(b,-1);
  updateFloorRoster(b,-1);
 }
-showFloorControls(buildings[0]);applyFloorVisibility();
+document.getElementById('floorControls').innerHTML='';applyFloorVisibility();
 let paused=false;document.getElementById('pause').onclick=()=>{paused=!paused;document.getElementById('pause').textContent=paused?'▶ เล่นต่อ':'Ⅱ หยุด'};
 document.getElementById('reset').onclick=()=>{people.forEach(p=>scene.remove(p));people.length=0;for(let i=0;i<18;i++)addPerson();for(let i=0;i<8;i++)addOpdVisitor(i>=4);paused=false;document.getElementById('pause').textContent='Ⅱ หยุด'};
 document.getElementById('add').onclick=()=>{for(let i=0;i<5;i++)addPerson()};
