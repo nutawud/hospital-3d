@@ -1,4 +1,469 @@
 <!doctype html>
-<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Patient Flow Simulation — 3D</title>
 <style>
+*{box-sizing:border-box}body{margin:0;background:#eaf1f4;color:#203746;font-family:system-ui,"Segoe UI",sans-serif}
+.app{height:100vh;min-height:620px;display:grid;grid-template-columns:270px 1fr;gap:12px;padding:12px}
+.panel,.main{background:#fff;border:1px solid #dbe5eb;border-radius:18px;box-shadow:0 8px 28px #29465b0c}
+.panel{padding:18px;display:flex;flex-direction:column;gap:16px;overflow:auto}
+.brand{display:flex;align-items:center;gap:10px}.logo{height:42px;width:42px;border-radius:13px;background:#dc2931;color:white;font-weight:900;font-size:22px;display:grid;place-items:center}
+h1{font-size:17px;margin:0}.sub{font-size:11px;color:#7a8d98;margin-top:3px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stat{background:#f3f7f9;border-radius:12px;padding:11px}.stat b{display:block;font-size:24px;color:#d52b32}.stat span{font-size:11px;color:#738895}
+h2{font-size:13px;color:#526b7c;margin:0 0 8px}.building-list{display:grid;gap:7px}.building{display:flex;gap:9px;align-items:center;background:#f7fafb;border:1px solid transparent;border-radius:10px;padding:9px;text-align:left;cursor:pointer;color:#284354;font:inherit}.building.active,.building:hover{background:#fff1f1;border-color:#f0b4b7}.swatch{width:12px;height:12px;border-radius:4px;flex:none}.building strong{font-size:12px;display:block}.building small{font-size:10px;color:#7b8e9a}
+.controls{display:flex;gap:7px;flex-wrap:wrap}.floorBtn{border:1px solid #dbe5eb;background:#f4f8fa;color:#35556a;border-radius:9px;padding:8px 10px;font-weight:700;cursor:pointer}.floorBtn.active{background:#d82730;color:white;border-color:#d82730}.floorCount{flex:1 0 100%;margin-top:5px;padding:12px;border:1px solid #dbe5eb;border-radius:12px;background:#f7fafb;color:#35556a;font-size:12px;line-height:1.6}.floorCount strong{font-size:18px;color:#d82730}.floorCount small{display:block;color:#7b8e9a;font-size:10px}.floorRoster{flex:1 0 100%;margin-top:5px;padding:12px;border:1px solid #dbe5eb;border-radius:12px;background:#fff;font-size:12px;line-height:1.7;color:#35556a}.floorRoster h3{margin:0 0 6px;font-size:13px;color:#244052}.floorRoster ol{margin:0;padding-left:22px}.floorRoster .muted{font-size:10px;color:#7b8e9a;margin-top:7px}.floorOverlay{position:absolute;z-index:8;top:54px;right:14px;width:min(310px,calc(100% - 28px));max-height:65%;overflow:auto;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border:1px solid #d6e2e8;border-radius:14px;box-shadow:0 12px 34px #20374625;padding:13px;color:#35556a;font-size:12px;line-height:1.6}.floorOverlay[hidden]{display:none}.floorOverlay .overlayHead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.floorOverlay h3{font-size:13px;margin:0;color:#244052}.floorOverlay .closeOverlay{border:0;border-radius:7px;background:#edf3f6;color:#35556a;padding:4px 8px;cursor:pointer}.floorOverlay ol{margin:0;padding-left:22px}.floorOverlay .muted{font-size:10px;color:#7b8e9a;margin-top:7px}.patientModalCard{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:30;width:min(430px,calc(100% - 32px));max-height:calc(100% - 32px);overflow:auto;background:rgba(255,255,255,.98);border:1px solid #d6e2e8;border-radius:20px;box-shadow:0 18px 55px #0c263b45;padding:18px;color:#35556a;font-size:13px;line-height:1.65}.patientModalCard .overlayHead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}.patientModalCard h3{font-size:16px;margin:0;color:#244052}.patientModalCard .closeOverlay{border:0;border-radius:9px;background:#edf3f6;color:#35556a;padding:7px 10px;cursor:pointer}.patientModalCard ol{margin:0;padding-left:22px}.patientModalCard .muted{font-size:11px;color:#7b8e9a;margin-top:8px}.patientPortrait{display:block;width:112px;height:112px;margin:2px auto 12px;border-radius:50%;background:#eaf3f7;border:4px solid #fff;box-shadow:0 3px 14px #24405220}.patientModalCard{position:relative;width:min(430px,100%);max-height:calc(100% - 10px);overflow:auto;background:rgba(255,255,255,.98);border:1px solid #d6e2e8;border-radius:20px;box-shadow:0 18px 55px #0c263b45;padding:18px;color:#35556a;font-size:13px;line-height:1.65}.patientModalCard .overlayHead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}.patientModalCard h3{font-size:16px;margin:0;color:#244052}.patientModalCard .closeOverlay{border:0;border-radius:9px;background:#edf3f6;color:#35556a;padding:7px 10px;cursor:pointer}.patientModalCard ol{margin:0;padding-left:22px}.patientModalCard .muted{font-size:11px;color:#7b8e9a;margin-top:8px}.patientPortrait{display:block;width:112px;height:112px;margin:2px auto 12px;border-radius:50%;background:#eaf3f7;border:4px solid #fff;box-shadow:0 3px 14px #24405220}.floorOverlay .overlayHead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.floorOverlay h3{font-size:13px;margin:0;color:#244052}.floorOverlay .closeOverlay{border:0;border-radius:7px;background:#edf3f6;color:#35556a;padding:4px 8px;cursor:pointer}.floorOverlay ol{margin:0;padding-left:22px}.floorOverlay .muted{font-size:10px;color:#7b8e9a;margin-top:7px}.btn{border:0;border-radius:10px;background:#d82730;color:white;font-weight:700;padding:10px 12px;cursor:pointer}.btn.alt{background:#edf3f6;color:#36566a}.note{margin-top:auto;border-top:1px solid #e5edf1;padding-top:12px;color:#788d99;font-size:11px;line-height:1.6}
+.main{padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0}.top{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 5px}.top h2{margin:0;font-size:15px;color:#244052}.right{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.live{font-size:11px;color:#24814d;background:#e7f5eb;padding:7px 10px;border-radius:20px}
+.stage{position:relative;flex:1;min-height:520px;border-radius:14px;overflow:hidden;border:1px solid #e2ebef;background:radial-gradient(ellipse at 50% 35%,#f9fcfd,#eaf1f4 75%)}#view{width:100%;height:100%;display:block;touch-action:none}
+.hud{position:absolute;left:14px;top:14px;background:#ffffffed;border:1px solid #e0e9ee;border-radius:11px;padding:10px 13px;pointer-events:none}.hud b{display:block;font-size:12px}.hud span{font-size:10px;color:#718592}.hint{position:absolute;right:14px;bottom:14px;background:#ffffffd9;border-radius:9px;padding:8px 10px;color:#6b8290;font-size:10px;pointer-events:none}
+.status{position:absolute;right:14px;top:14px;background:#ffffffed;border:1px solid #e0e9ee;border-radius:10px;padding:8px 11px;font-size:11px;color:#6a8190}
+@media(max-width:850px){.app{grid-template-columns:1fr;height:auto;min-height:100vh}.panel{order:2}.main{height:75vh}.stage{min-height:480px}}
+ #patientDetailModal[hidden]{display:none}</style></head><body>
+<div class="app">
+<aside class="panel">
+<div class="brand"><div class="logo">+</div><div><h1>Patient Flow 3D</h1><div class="sub">โรงพยาบาลจำลอง • มุมมอง 3 มิติ</div></div></div>
+<div class="stats"><div class="stat"><b id="peopleNum">18</b><span>ผู้รับบริการ</span></div><div class="stat"><b id="waitingNum">7</b><span>กำลังรอ</span></div></div>
+<section><h2>จุดบริการ</h2><div class="building-list" id="buildingList"></div></section>
+<section><h2>เลือกชั้นของอาคาร</h2><div class="controls" id="floorControls"><span class="sub">เลือกอาคารจากรายการด้านบน</span></div></section><section><h2>ควบคุมการจำลอง</h2><div class="controls"><button class="btn" id="pause">Ⅱ หยุด</button><button class="btn alt" id="reset">↻ เริ่มใหม่</button><button class="btn alt" id="add">＋ เพิ่มคน</button></div></section>
+<div class="note">ฉาก 3D แบบจำลองห้องบริการเปิดหลังคา เห็นผนัง เฟอร์นิเจอร์ และคนเดินในพื้นที่<br><br>ชื่ออาคารและการใช้แต่ละชั้นยึดตามผังที่ส่งมา จุดที่อ่านข้อความไม่ชัดระบุไว้ให้ตรวจทาน</div>
+</aside>
+<main class="main"><div class="top"><h2>จำลองการเดินทางของผู้รับบริการ</h2><div class="right"><button class="btn alt" id="resetCamera">มุมเริ่มต้น</button><span class="live">● 3D Scene</span></div></div>
+<div class="stage" id="stage"><canvas id="view"></canvas><div class="floorOverlay" id="floorOverlay" hidden></div><div class="hud"><b>10:28</b><span>เวลาจำลอง • รอบบริการ 1 วัน</span></div><div class="status">สถานการณ์จำลอง</div><div class="hint">ตึก 111 ปี ชั้น 4–5 มีห้องผู้ป่วยชั้นละ 10 ห้อง • ห้องมีคนไข้จะแสดงไฟสีเขียว • OPD ชั้น 1 มี 10 ห้องตรวจ</div></div></main>
+</div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+const canvas=document.getElementById('view'),stage=document.getElementById('stage');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(stage.clientWidth,stage.clientHeight,false);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;
+const scene=new THREE.Scene();scene.background=new THREE.Color('#eaf1f4');scene.fog=null; // Disable distance fog so zooming out stays clear.
+const camera=new THREE.PerspectiveCamera(38,stage.clientWidth/stage.clientHeight,.1,100);let target=new THREE.Vector3(-2,1.5,0),radius=39,theta=.72,phi=1.02;
+function updateCamera(){phi=Math.max(.08,Math.min(1.48,phi));camera.position.set(target.x+radius*Math.sin(phi)*Math.sin(theta),target.y+radius*Math.cos(phi),target.z+radius*Math.sin(phi)*Math.cos(theta));camera.lookAt(target)}
+updateCamera();
+scene.add(new THREE.HemisphereLight(0xffffff,0x9baeb8,2.0));
+const sun=new THREE.DirectionalLight(0xffffff,2.4);sun.position.set(-10,18,12);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-18;sun.shadow.camera.right=18;sun.shadow.camera.top=18;sun.shadow.camera.bottom=-18;scene.add(sun);
+const mat=(c,rough=.82)=>new THREE.MeshStandardMaterial({color:c,roughness:rough});
+const floorMat=mat('#e6edef'),lineMat=mat('#d2dfe4'),wallWhite=mat('#f7fbfc'),chairMat=mat('#8d9ea7'),wood=mat('#cda477'),metal=mat('#b5c3ca'),glass= new THREE.MeshStandardMaterial({color:'#b8d9e5',roughness:.25,metalness:.1});
+function box(parent,x,y,z,w,h,d,m){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y+h/2,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
+const ground=new THREE.Mesh(new THREE.BoxGeometry(34,.22,30),floorMat);ground.position.set(-4.725,-.13,1.95);ground.receiveShadow=true;scene.add(ground);
+// ground grid
+// Ground grid removed for a clean, uncluttered floor.
+// service room footprints (x,z), room dimensions
+const buildings=[
+{id:'birth',name:'อาคารห้องคลอด',x:-7.8,z:-9.0,w:3.9,d:3.0,floors:2,color:'#d93339',kind:'clinic',floorText:['ชั้น 1 ห้องคลอด','ชั้น 2 คลินิกคลอด']},
+{id:'unspecified',name:'อาคารยังไม่ระบุชื่อ',x:3.2,z:-9.0,w:4.3,d:3.0,floors:2,color:'#d93339',kind:'clinic',floorText:['ยังไม่มีข้อมูลการใช้งานแต่ละชั้น']},
+{id:'dental',name:'อาคารไตเทียม / คลินิกฟัน',x:-7.8,z:-3.0,w:3.9,d:3.0,floors:2,color:'#d93339',kind:'clinic',floorText:['ชั้น 1 ไตเทียม (ข้อความในผัง)','ชั้น 2 คลินิกฟัน']},
+{id:'honor111',name:'ตึกเฉลิมพระเกียรติ 111 ปี',x:3.2,z:-3.0,w:4.7,d:4.2,floors:5,color:'#d93339',kind:'ward',floorText:['ชั้น 1 ไตเทียมรัฐบาล','ชั้น 2–3 ผู้ป่วยใน','ชั้น 4 ผู้ป่วยใน • 10 ห้อง','ชั้น 5 ผู้ป่วยใน • 10 ห้อง']},
+{id:'opd',name:'อาคารผู้ป่วยนอก OPD',x:-7.8,z:3.2,w:8.2,d:7.2,floors:4,color:'#f28b2c',kind:'clinic',floorText:['ชั้น 1 OPD • 10 ห้องตรวจ + โถงรอคนไข้ตรงกลาง','ชั้น 2 ห้อง/หน่วยบริการ (ข้อความในภาพไม่ชัด)','ชั้น 3 คลินิกพิเศษ','ชั้น 4 คลินิกแพทย์ไทย']},
+{id:'emergency',name:'อาคารฉุกเฉิน',x:3.2,z:5.0,w:4.6,d:3.5,floors:1,color:'#d93339',kind:'clinic',floorText:['ฉุกเฉิน']},
+{id:'honor',name:'ตึกเฉลิมพระเกียรติ',x:-13.0,z:12.5,w:3.9,d:3.8,floors:5,color:'#d93339',kind:'ward',floorText:['ชั้น 1 ตึกเด็ก','ชั้น 2–5 ผู้ป่วยใน']}
+];const roomGroups=[];
+const wallH=1.82,levelH=2.15;
+function makeWindow(parent,x,y,z,w,h){
+ const win=new THREE.Mesh(new THREE.BoxGeometry(w,h,.055),glass);win.position.set(x,y,z);win.castShadow=false;parent.add(win);
+ const frame=mat('#d9e4e9');box(parent,x-w/2,y-h/2,z-.045,.055,h,.08,frame);box(parent,x+w/2-.055,y-h/2,z-.045,.055,h,.08,frame);box(parent,x,y+h/2-.045,z-.045,w,.055,.08,frame);
+}
+function makeTextSprite(lines,opts={}){
+ const c=document.createElement('canvas'),cx=c.getContext('2d');c.width=640;c.height=160;
+ cx.fillStyle='#ffffff';cx.strokeStyle='#d5dfe4';cx.lineWidth=4;
+ cx.beginPath();cx.roundRect(8,8,624,144,18);cx.fill();cx.stroke();
+ cx.fillStyle='#253e4e';cx.font='bold 30px sans-serif';cx.textAlign='center';cx.textBaseline='middle';
+ cx.fillText(lines[0]||'',320,52);
+ cx.font='23px sans-serif';cx.fillStyle='#536b79';
+ cx.fillText(lines[1]||'',320,102);
+ const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;
+ const mesh=new THREE.Mesh(new THREE.PlaneGeometry(opts.w||3.4,opts.h||.85),new THREE.MeshBasicMaterial({map:tex,transparent:true,side:THREE.DoubleSide,depthWrite:false}));
+ mesh.renderOrder=5;return mesh;
+}
+function buildMultiFloorBuilding(b){
+ const baseY=0,slab=.16,group=new THREE.Group();group.userData.buildingId=b.id;scene.add(group);
+ // building base and entry apron
+ box(group,b.x,-.05,b.z,b.w+.35,.18,b.d+.35,mat('#cbd9df'));
+ const col=mat(b.color),dark=mat(b.color).clone();dark.color.multiplyScalar(.72);const facade=b.id==='opd'?mat('#fffaf2'):mat('#f6fafb');
+ const white=mat('#f6fafb'),inner=mat('#e3ebef'),floorGroups=[];
+ // Floor-level people counts are simulation values; occupied inpatient rooms are counted from room occupancy.
+ b.floorPeopleCounts=Array.from({length:b.floors},(_,f)=>b.id==='honor111'&&f>=3?0:Math.floor(5+Math.random()*18));
+ for(let f=0;f<b.floors;f++){
+   const floorGroup=new THREE.Group();floorGroup.userData.floorIndex=f;floorGroup.userData.buildingId=b.id;group.add(floorGroup);floorGroups.push(floorGroup);
+   const y=f*levelH;
+   // floor slab and facade beams establish visible stacked levels
+   box(floorGroup,b.x,y,b.z,b.w,.14,b.d,mat('#d7e2e7'));
+   // back wall and side walls, leaving front open as a cutaway for viewing interior
+   box(floorGroup,b.x,y+.14,b.z-b.d/2+.08,b.w,wallH,.16,facade);
+   box(floorGroup,b.x-b.w/2+.08,y+.14,b.z,.16,wallH,b.d,facade);
+   box(floorGroup,b.x+b.w/2-.08,y+.14,b.z,.16,wallH,b.d,facade);
+   // colored horizontal floor band along front and sides
+   box(floorGroup,b.x,y+.14,b.z+b.d/2-.08,b.w,.17,.16,col);
+   box(floorGroup,b.x-b.w/2+.08,y+.14,b.z,.16,.17,b.d,col);
+   box(floorGroup,b.x+b.w/2-.08,y+.14,b.z,.16,.17,b.d,col);
+   if(b.id==='opd'){
+     // OPD facade: warm white exterior with orange bands and orange corner columns
+     box(floorGroup,b.x,y+.42,b.z+b.d/2-.08,b.w,.10,.18,mat('#f28b2c'));
+     box(floorGroup,b.x-b.w/2+.12,y+.14,b.z+b.d/2-.08,.16,wallH,.20,mat('#f28b2c'));
+     box(floorGroup,b.x+b.w/2-.12,y+.14,b.z+b.d/2-.08,.16,wallH,.20,mat('#f28b2c'));
+   }
+   // front columns and glazing panels, with wide central opening to see rooms
+   for(const xx of [b.x-b.w/2+.12,b.x,b.x+b.w/2-.12]){
+     box(floorGroup,xx,y+.14,b.z+b.d/2-.08,.12,wallH,.16,col);
+   }
+   // interior partition and rooms
+   box(floorGroup,b.x-.35,y+.14,b.z-.45,.10,1.25,b.d*.42,inner);
+   // Honor 111-year building: inpatient floors 4-5 have 10 rooms per floor.
+   // Each room is simulated as occupied/unoccupied; occupied rooms show a green status lamp.
+   if(b.id==='honor111' && f>=3){
+     const wall=mat('#d5e0e5'),bedmat=mat('#edf2f5'),lampOn=new THREE.MeshStandardMaterial({color:'#20c85a',emissive:'#12b84a',emissiveIntensity:1.8}),lampOff=new THREE.MeshStandardMaterial({color:'#66747b',emissive:'#20282c',emissiveIntensity:.15});
+     const roomNoBase=(f+1)*100;
+     for(let row=0;row<2;row++){
+       for(let r=0;r<5;r++){
+         const n=row*5+r+1,rx=b.x-b.w/2+.48+r*.91,rz=b.z+(row===0?-.95:1.05);
+         // room partition / door-facing corridor edge
+         box(floorGroup,rx,y+.76,rz,.82,.10,1.52,wall);
+         box(floorGroup,rx,y+.76,rz+(row===0?.73:-.73),.82,.10,.10,wall);
+         // patient bed and bedside table
+         box(floorGroup,rx,y+.40,rz,.48,.18,.88,bedmat);
+         box(floorGroup,rx,y+.53,rz-.28,.44,.06,.24,white);
+         box(floorGroup,rx+.30,y+.35,rz+(row===0?.30:-.30),.20,.42,.24,wood);
+         // occupancy is simulated independently for each room
+         const occupied=Math.random()<.62;
+         if(occupied)b.floorPeopleCounts[f]++;
+         const lamp=new THREE.Mesh(new THREE.SphereGeometry(.105,12,10),occupied?lampOn:lampOff);
+         lamp.position.set(rx,y+1.45,b.z+b.d/2-.10);floorGroup.add(lamp);
+         if(occupied){
+           const patientTarget={buildingId:b.id,floor:f,room:roomNoBase+n,patientNo:n,arrivalTime:Date.now()-Math.floor((15+Math.random()*345)*60*1000)};
+           const patientBody=new THREE.Mesh(new THREE.CapsuleGeometry(.105,.25,3,7),mat('#78a9cf'));
+           patientBody.position.set(rx,y+.66,rz);patientBody.userData.patientTarget=patientTarget;floorGroup.add(patientBody);
+           const patientHead=new THREE.Mesh(new THREE.SphereGeometry(.09,10,8),mat('#efc7a7'));
+           patientHead.position.set(rx,y+.86,rz-.24);patientHead.userData.patientTarget=patientTarget;floorGroup.add(patientHead);
+         }
+         const roomSign=makeTextSprite(['ห้อง '+(roomNoBase+n),'ผู้ป่วยใน'],{w:.95,h:.34});
+         roomSign.position.set(rx,y+1.68,b.z+b.d/2+.02);floorGroup.add(roomSign);
+       }
+     }
+   }
+   if(b.id==='opd' && f===0){
+     const roomWall=mat('#d5e0e5'),roomDoor=mat('#9bcbd8'),examBed=mat('#edf2f5');
+     // Five examination rooms on each side, arranged along the building depth
+     for(let side of [-1,1]){
+       const roomX=b.x+side*2.55;
+       for(let r=0;r<5;r++){
+         const roomZ=b.z+1.85-r*.92;
+         // room partitions and dividing walls
+         box(floorGroup,roomX,y+.82,roomZ-.44,2.15,.10,.10,roomWall);
+         if(r<4)box(floorGroup,roomX,y+.82,roomZ-.02,2.15,.10,.10,roomWall);
+         // exam bed, clinician desk and chair
+         box(floorGroup,roomX+side*.35,y+.42,roomZ-.18,.78,.18,.48,examBed);
+         box(floorGroup,roomX+side*.35,y+.54,roomZ-.18,.68,.06,.40,white);
+         box(floorGroup,roomX-side*.55,y+.52,roomZ+.22,.58,.66,.38,wood);
+         box(floorGroup,roomX-side*.55,y+.20,roomZ+.52,.34,.34,.34,chairMat);
+         // numbered room plaque
+         const roomNo=(side<0?r+1:r+6);
+         const roomSign=makeTextSprite(['ห้องตรวจ '+roomNo,'OPD ชั้น 1'],{w:1.35,h:.42});
+         roomSign.position.set(roomX,y+1.65,roomZ+.40);floorGroup.add(roomSign);
+       }
+     }
+     // central waiting zone: three rows of connected seats facing the service counters
+     for(let row=0;row<3;row++){
+       const seatZ=b.z+1.65-row*1.35;
+       for(let seat=0;seat<4;seat++){
+         const sx=b.x-.95+seat*.63;
+         box(floorGroup,sx,y+.30,seatZ,.52,.14,.42,chairMat);
+         box(floorGroup,sx,y+.55,seatZ+.16,.52,.48,.10,chairMat);
+       }
+     }
+     // central reception / registration counter
+     box(floorGroup,b.x,y+.58,b.z-2.55,2.65,.82,.55,wood);
+     box(floorGroup,b.x,y+1.02,b.z-2.55,2.65,.08,.55,mat('#e6c49c'));
+   }else if(b.kind==='ward'){
+     for(let k=0;k<2;k++){
+       let bx=b.x+(k?1.15:-1.15),bz=b.z-.55;
+       box(floorGroup,bx,y+.14,bz,.95,.42,.62,mat('#edf2f5'));
+       box(floorGroup,bx,y+.56,bz,.88,.07,.56,white);
+       box(floorGroup,bx-.42,y+.14,bz,.08,.42,.08,metal);box(floorGroup,bx+.42,y+.14,bz,.08,.42,.08,metal);
+       box(floorGroup,bx,y+.14,bz+.75,.48,.55,.42,wood);
+     }
+   }else if(b.kind==='service'){
+     for(let k=0;k<3;k++)box(floorGroup,b.x-1.25+k*1.15,y+.14,b.z-.25,.78,.82,.42,wood);
+   }else{
+     box(floorGroup,b.x-.8,y+.14,b.z-.4,1.25,.76,.52,wood);
+     box(floorGroup,b.x-.8,y+.9,b.z-.4,1.25,.08,.52,mat('#e6c49c'));
+     box(floorGroup,b.x+.75,y+.14,b.z-.35,1.25,.42,.72,mat('#edf2f5'));
+     box(floorGroup,b.x+.75,y+.56,b.z-.35,1.18,.07,.66,white);
+   }
+   // waiting seats on every floor
+   for(let k=0;k<3;k++){
+     let cx=b.x-.95+k*.9,cz=b.z+b.d*.18;
+     box(floorGroup,cx,y+.14,cz,.55,.16,.48,chairMat);
+     box(floorGroup,cx,y+.3,cz+.18,.55,.48,.10,chairMat);
+   }
+   // windows on back and side, repeating for each storey
+   for(let k=0;k<3;k++){
+     let wx=b.x-b.w*.28+k*b.w*.28;
+     makeWindow(floorGroup,wx,y+.14+1.05,b.z-b.d/2+.17,.62,.68);
+   }
+   // floor number band / slab edge
+   box(floorGroup,b.x,y+.14+wallH,b.z+b.d/2-.08,b.w,.055,.17,dark);
+ }
+ // roof slab, parapet and visible stair/elevator core
+ const roofY=b.floors*levelH;
+ box(group,b.x,roofY,b.z,b.w,.2,b.d,mat('#cbd9df'));
+ box(group,b.x-b.w*.32,roofY+.2,b.z-b.d*.32,.95,.85,.95,white);
+ // front entrance canopy and double doors
+ box(group,b.x, .12,b.z+b.d/2+.32,1.65,.12,.55,col);
+ box(group,b.x-.34,.14,b.z+b.d/2-.02,.48,1.45,.08,glass);
+ box(group,b.x+.34,.14,b.z+b.d/2-.02,.48,1.45,.08,glass);
+ // 3D floating name plaque, plus floor-use information in the sidebar
+ const plaque=makeTextSprite([b.name,`${b.floors} ชั้น`],{w:Math.min(4.4,b.w+.3),h:.95});
+ plaque.position.set(b.x,roofY+.82,b.z+b.d/2+.12);group.add(plaque);
+ // side stair stack, with horizontal stair/landing rhythm
+ const sx=b.x+b.w/2-.48,sz=b.z-b.d/2+.52;
+ for(let f=0;f<b.floors;f++){
+   let yy=f*levelH;
+   for(let step=0;step<5;step++)box(group,sx,yy+.15+step*.12,sz+step*.12,.58,.08,.22,metal);
+ }
+ roomGroups.push({building:b,group,floorGroups});
+}
+buildings.forEach(buildMultiFloorBuilding);
+
+// OPD ground-floor outpatient entrance and pedestrian approach
+{
+ const opd=buildings.find(b=>b.id==='opd'),front=opd.z+opd.d/2;
+ // Wide approach path from the campus walkway to the OPD entrance
+ box(scene,opd.x,.015,front+1.55,3.25,.035,3.1,mat('#e9eff2'));
+ for(let k=0;k<6;k++)box(scene,opd.x-1.25+k*.5,.04,front+1.55,.20,.018,.06,mat('#ffffff'));
+ // Entrance canopy and pillars
+ box(scene,opd.x,2.05,front+.12,3.0,.16,.72,mat('#f28b2c'));
+ for(const dx of [-1.32,1.32])box(scene,opd.x+dx,1.0,front+.12,.13,1.85,.16,mat('#f28b2c'));
+ // Glass automatic sliding door panels
+ box(scene,opd.x-.55,.95,front-.02,1.05,1.62,.055,mat('#9bcbd8'));
+ box(scene,opd.x+.55,.95,front-.02,1.05,1.62,.055,mat('#9bcbd8'));
+ box(scene,opd.x,.12,front-.05,2.25,.10,.28,mat('#aebdc5'));
+ const sign=makeTextSprite(['OPD','ผู้ป่วยนอก • ชั้น 1 • 10 ห้องตรวจ'],{w:3.5,h:.72});
+ sign.position.set(opd.x,2.75,front+.28);scene.add(sign);
+}
+
+// connecting walkways and central patient-flow spine
+box(scene,0,-.04,0,19,.08,1.35,mat('#d9e5e9'));
+// Remove floor striping.
+// a small reception kiosk at the center
+box(scene,0,.0,.85,1.65,.85,.65,wood);box(scene,0,.85,.85,1.65,.08,.65,mat('#ead0b2'));
+
+// central corridor and direction markings
+box(scene,0,-.02,.0,19,.08,1.55,mat('#dbe7eb'));
+// Remove central corridor striping.
+// small reception/flow icon columns
+function makePerson(color,staff=false){const g=new THREE.Group();const body= new THREE.Mesh(new THREE.CapsuleGeometry(.16,.42,4,8),mat(color));body.position.y=.66;body.castShadow=true;g.add(body);const head=new THREE.Mesh(new THREE.SphereGeometry(.14,12,10),mat('#efc7a7'));head.position.y=1.02;head.castShadow=true;g.add(head);const legmat=mat('#52616b');const legs=[];for(let s of [-1,1]){const leg=new THREE.Mesh(new THREE.BoxGeometry(.09,.32,.1),legmat);leg.position.set(s*.09,.22,0);g.add(leg);legs.push(leg)}g.userData.legs=legs;g.userData.phase=Math.random()*6;g.userData.staff=staff;return g}
+const people=[];const routes=[[-6.8,-1.8],[0,-1.8],[6.1,-1.8],[0,0],[-6.5,1.2],[0,1.1],[6.6,1.2],[0,0]];
+let walkingPatientSerial=0;
+function tagWalkingPatient(p,service){
+ walkingPatientSerial++;
+ p.userData.patientTarget={kind:'walking',patientNo:walkingPatientSerial,service,name:'ผู้ป่วยจำลองเดิน '+String(walkingPatientSerial).padStart(2,'0'),arrivalTime:Date.now()};
+}
+function addPerson(){const p=makePerson(['#dca46b','#d66d71','#7ba9c6','#b19acb'][Math.floor(Math.random()*4)]);tagWalkingPatient(p,'พื้นที่โรงพยาบาล');p.position.set(-8+Math.random()*16,.0,Math.random()<.5?-1.0:1.0);p.userData.routeIndex=0;p.userData.wait=Math.random()*2;p.userData.speed=.55+Math.random()*.45;scene.add(p);people.push(p);updateStats()}
+for(let i=0;i<18;i++)addPerson();
+
+function addOpdVisitor(startInside=false){
+ const p=makePerson(['#dca46b','#d66d71','#7ba9c6','#b19acb'][Math.floor(Math.random()*4)]);
+ tagWalkingPatient(p,'ผู้ป่วยนอก (OPD)');
+ const x=-7.8,front=3.2+7.2/2;
+ // Walking route: campus approach -> entrance -> OPD lobby/reception -> exit
+ p.userData.opdFlow=true;
+ p.userData.opdRoute=startInside?3:0;
+ p.userData.opdWaypoints=[
+  [x+((Math.random()-.5)*.9),front+3.0],
+  [x,front+.35],
+  [x,front-1.25],
+  [x+.65,front-2.15],
+  [x-.55,front-2.0],
+  [x,front-1.25],
+  [x,front+.35],
+  [x+((Math.random()-.5)*.9),front+3.0]
+ ];
+ const pt=p.userData.opdWaypoints[p.userData.opdRoute];
+ p.position.set(pt[0],0,pt[1]);
+ p.userData.wait=Math.random()*1.4;
+ p.userData.speed=.48+Math.random()*.28;
+ scene.add(p);people.push(p);updateStats();
+}
+for(let i=0;i<8;i++)addOpdVisitor(i>=4);
+
+function updateStats(){document.getElementById('peopleNum').textContent=people.length;document.getElementById('waitingNum').textContent=people.filter(p=>p.userData.wait>0).length}
+buildings.forEach((b,i)=>{let el=document.createElement('button');el.className='building'+(i===0?' active':'');el.innerHTML='<span class="swatch" style="background:'+b.color+'"></span><span><strong>'+b.name+'</strong><small>'+b.floorText.join(' / ')+'</small></span>';el.onclick=()=>{document.querySelectorAll('.building').forEach(x=>x.classList.remove('active'));el.classList.add('active');target.set(b.x,b.floors*levelH*.38,b.z);radius=25;updateCamera();showFloorControls(b)};document.getElementById('buildingList').appendChild(el)});
+let selectedBuilding=buildings[0],selectedFloor=-1;
+function updateFloorCount(b,f){
+ const holder=document.getElementById('floorControls');
+ let card=holder.querySelector('.floorCount');
+ if(!card){card=document.createElement('div');card.className='floorCount';holder.appendChild(card);}
+ const total=b.floorPeopleCounts.reduce((sum,n)=>sum+n,0);
+ if(f<0){
+   card.innerHTML='จำนวนคนจำลองทั้งอาคาร <strong>'+total+' คน</strong><small>รวมทุกชั้น • ตัวเลขจำลองเพื่อแสดงภาพรวม</small>';
+ }else{
+   const floorLabel='ชั้น '+(f+1);
+   card.innerHTML=floorLabel+' <strong>'+b.floorPeopleCounts[f]+' คน</strong><small>จำนวนคนจำลองบนชั้นนี้ • ไม่ใช่ข้อมูลผู้ป่วยจริง</small>';
+ }
+}
+function updateFloorRoster(b,f){
+ const holder=document.getElementById('floorControls');
+ let roster=holder.querySelector('.floorRoster');
+ if(!roster){roster=document.createElement('div');roster.className='floorRoster';holder.appendChild(roster);}
+ const overlay=document.getElementById('floorOverlay');
+ let heading='',items='',note='';
+ if(f<0){
+   heading='รายชื่อในอาคาร';
+   items='<div class="muted">คลิกชั้นของอาคารในแบบจำลอง เพื่อแสดงรายชื่อที่นี่</div>';
+ }else{
+   const floorNum=f+1;let entries=[];
+   if(b.id==='honor111' && f>=3){
+     const start=floorNum*100+1;
+     entries=Array.from({length:10},(_,i)=>({room:start+i,name:'ผู้ป่วยจำลอง '+(i+1)}));
+   }else{
+     const count=Math.max(0,b.floorPeopleCounts[f]||0);
+     entries=Array.from({length:count},(_,i)=>({room:'—',name:'บุคคลจำลอง '+(i+1)}));
+   }
+   heading='รายชื่อจำลอง • '+b.name+' • ชั้น '+floorNum;
+   items='<ol>'+entries.map(e=>'<li>'+(e.room!=='—'?'ห้อง '+e.room+' — ':'')+e.name+'</li>').join('')+'</ol>';
+   note='<div class="muted">ข้อมูลสมมติสำหรับสาธิต ไม่ใช่รายชื่อหรือข้อมูลผู้ป่วยจริง</div>';
+ }
+ const overlayContent='<div class="overlayHead"><h3>'+heading+'</h3><button class="closeOverlay" type="button" aria-label="ปิด">ปิด ✕</button></div>'+items+note;
+ roster.innerHTML=heading+'<div>'+items+'</div>'+note;
+ overlay.innerHTML=overlayContent;overlay.hidden=false;
+ overlay.querySelector('.closeOverlay').onclick=()=>overlay.hidden=true;
+}
+function patientPortraitSvg(){
+ return '<svg class="patientPortrait" viewBox="0 0 120 120" role="img" aria-label="ภาพผู้ป่วยจำลอง">'+
+ '<circle cx="60" cy="60" r="60" fill="#eaf3f7"/><path d="M18 112c5-24 21-35 42-35s37 11 42 35" fill="#78a9cf"/>'+
+ '<path d="M37 43c0-21 12-31 26-29 15 1 22 13 20 31l-6 16H43z" fill="#4a5964"/>'+
+ '<circle cx="60" cy="49" r="24" fill="#efc7a7"/><path d="M36 45c3-20 17-29 31-25 10 2 17 10 18 22-11-2-20-8-25-15-6 9-14 15-24 18z" fill="#4a5964"/>'+
+ '<path d="M50 54h2m16 0h2" stroke="#5a4338" stroke-width="3" stroke-linecap="round"/><path d="M53 65q7 5 14 0" fill="none" stroke="#a96f61" stroke-width="2" stroke-linecap="round"/>'+
+ '<path d="M43 79l17 15 17-15" fill="#fff"/><path d="M54 92l6 8 6-8" fill="#d82730"/></svg>';
+}
+function elapsedHospitalTime(arrivalTime){
+ const mins=Math.max(0,Math.floor((Date.now()-(arrivalTime||Date.now()))/60000));
+ const hours=Math.floor(mins/60),remaining=mins%60;
+ return hours+' ชม. '+remaining+' นาที';
+}
+function patientModalShell(title,content,arrivalTime){
+ let modal=document.getElementById('patientDetailModal');
+ if(!modal){
+  modal=document.createElement('div');
+  modal.id='patientDetailModal';
+  modal.style.cssText='position:absolute;inset:0;z-index:30;background:rgba(15,35,48,.32);backdrop-filter:blur(2px)';
+  document.querySelector('.stage').appendChild(modal);
+ }
+ modal.innerHTML='<div class="patientModalCard"><div class="overlayHead"><h3>'+title+'</h3><button class="closeOverlay" type="button" aria-label="ปิด">ปิด ✕</button></div>'+content+'</div>';
+ modal.hidden=false;
+ const elapsed=modal.querySelector('#patientElapsed');
+ if(elapsed){
+  elapsed.textContent=elapsedHospitalTime(arrivalTime);
+  if(modal._elapsedTimer)clearInterval(modal._elapsedTimer);
+  modal._elapsedTimer=setInterval(()=>{if(!modal.hidden&&elapsed.isConnected)elapsed.textContent=elapsedHospitalTime(arrivalTime)},1000);
+ }
+ modal.querySelector('.closeOverlay').onclick=()=>{modal.hidden=true;if(modal._elapsedTimer){clearInterval(modal._elapsedTimer);modal._elapsedTimer=null}};
+}
+function showWalkingPatientDetails(patient){
+ const status=patient.wait>0?'กำลังรอ/รับบริการ':'กำลังเดินไปยังจุดบริการ';
+ const content=patientPortraitSvg()+
+ '<div style="text-align:center;padding:11px;background:#f4f8fa;border-radius:12px;margin-bottom:10px"><strong style="font-size:16px">'+patient.name+'</strong><br>รหัสจำลอง: P-'+String(patient.patientNo).padStart(4,'0')+'<br>ประเภท: '+patient.service+'<br>สถานะ: '+status+'<br><strong>เวลาตั้งแต่มาถึง รพ.: <span id="patientElapsed"></span></strong></div>'+
+ '<div class="muted" style="text-align:center">ภาพประกอบและข้อมูลผู้ป่วยจำลอง ไม่ใช่ผู้ป่วยจริง</div>';
+ patientModalShell('ข้อมูลผู้ป่วยจำลอง',content,patient.arrivalTime);
+}
+function showPatientDetails(b,patient){
+ const floorNum=patient.floor+1;
+ const start=floorNum*100+1;
+ const rows=Array.from({length:10},(_,i)=>{
+   const room=start+i,selected=room===patient.room;
+   return '<li'+(selected?' style="font-weight:700;color:#d82730"':'')+'>ห้อง '+room+' — '+(selected?'ผู้ป่วยจำลองที่เลือก':'ผู้ป่วยจำลอง '+(i+1))+(selected?' ◀':'')+'</li>';
+ }).join('');
+ const content=patientPortraitSvg()+
+ '<div style="text-align:center;padding:10px;background:#f4f8fa;border-radius:12px;margin-bottom:10px"><strong style="font-size:16px">'+b.name+'</strong><br>ชั้น '+floorNum+' • ห้อง '+patient.room+'<br>ผู้ป่วยจำลองที่ '+patient.patientNo+'<br><strong>เวลาตั้งแต่มาถึง รพ.: <span id="patientElapsed"></span></strong></div>'+
+ '<strong>รายชื่อผู้ป่วยจำลองในชั้นนี้</strong><ol>'+rows+'</ol>'+
+ '<div class="muted">ภาพประกอบและข้อมูลสมมติสำหรับสาธิตเท่านั้น</div>';
+ patientModalShell('ข้อมูลผู้ป่วยจำลอง',content,patient.arrivalTime);
+}
+function selectFloor(b,f){
+ selectedBuilding=b;selectedFloor=f;
+ const record=roomGroups.find(x=>x.building.id===b.id);
+ record.floorGroups.forEach(g=>g.visible=true); // Keep every floor visible; selection only changes the information overlay.
+ const holder=document.getElementById('floorControls');
+ holder.querySelectorAll('.floorBtn').forEach((x,i)=>x.classList.toggle('active',i===(f<0?0:f+1)));
+ updateFloorCount(b,f);
+ updateFloorRoster(b,f);
+ if(f>=0){target.set(b.x,(f+.6)*levelH,b.z);radius=15;updateCamera()}
+}
+function showFloorControls(b){
+ selectedBuilding=b;selectedFloor=-1;
+ const holder=document.getElementById('floorControls');holder.innerHTML='';
+ const all=document.createElement('button');all.className='floorBtn active';all.textContent='อาคารทั้งหมด';all.onclick=()=>selectFloor(b,-1);holder.appendChild(all);
+ for(let f=0;f<b.floors;f++){
+   const btn=document.createElement('button');btn.className='floorBtn';btn.textContent='ชั้น '+(f+1);
+   btn.onclick=()=>selectFloor(b,f);
+   holder.appendChild(btn);
+ }
+ updateFloorCount(b,-1);
+ updateFloorRoster(b,-1);
+}
+showFloorControls(buildings[0]);
+let paused=false;document.getElementById('pause').onclick=()=>{paused=!paused;document.getElementById('pause').textContent=paused?'▶ เล่นต่อ':'Ⅱ หยุด'};
+document.getElementById('reset').onclick=()=>{people.forEach(p=>scene.remove(p));people.length=0;for(let i=0;i<18;i++)addPerson();for(let i=0;i<8;i++)addOpdVisitor(i>=4);paused=false;document.getElementById('pause').textContent='Ⅱ หยุด'};
+document.getElementById('add').onclick=()=>{for(let i=0;i<5;i++)addPerson()};
+document.getElementById('resetCamera').onclick=()=>{target.set(-2,1.5,0);radius=39;theta=.72;phi=1.02;updateCamera()};
+const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
+let dragging=false,lastX=0,lastY=0,downX=0,downY=0;
+canvas.addEventListener('pointerdown',e=>{dragging=true;lastX=downX=e.clientX;lastY=downY=e.clientY;canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener('pointermove',e=>{if(!dragging)return;theta-=(e.clientX-lastX)*.008;phi+=(e.clientY-lastY)*.012;lastX=e.clientX;lastY=e.clientY;updateCamera()});
+canvas.addEventListener('pointerup',e=>{
+ const moved=Math.hypot(e.clientX-downX,e.clientY-downY);
+ dragging=false;
+ if(moved>6)return;
+ const rect=canvas.getBoundingClientRect();
+ pointer.x=((e.clientX-rect.left)/rect.width)*2-1;
+ pointer.y=-((e.clientY-rect.top)/rect.height)*2+1;
+ raycaster.setFromCamera(pointer,camera);
+ const hits=raycaster.intersectObjects(scene.children,true);
+ for(const hit of hits){
+   let node=hit.object,floorIndex=null,buildingId=null,patientTarget=null;
+   while(node){
+     if(node.userData.patientTarget)patientTarget=node.userData.patientTarget;
+     if(node.userData.floorIndex!==undefined)floorIndex=node.userData.floorIndex;
+     if(node.userData.buildingId)buildingId=node.userData.buildingId;
+     node=node.parent;
+   }
+   if(patientTarget){
+     if(patientTarget.kind==='walking'){
+       showWalkingPatientDetails({...patientTarget,wait:node?.userData?.wait??hit.object.parent?.userData?.wait??0});
+       break;
+     }
+     const patientBuilding=buildings.find(x=>x.id===patientTarget.buildingId);
+     if(patientBuilding){
+       showFloorControls(patientBuilding);
+       selectFloor(patientBuilding,patientTarget.floor);
+       showPatientDetails(patientBuilding,patientTarget);
+     }
+     break;
+   }
+   if(buildingId){
+     const b=buildings.find(x=>x.id===buildingId);
+     if(b){
+       document.querySelectorAll('.building').forEach(el=>el.classList.remove('active'));
+       const buttons=[...document.querySelectorAll('.building')],idx=buildings.indexOf(b);
+       if(buttons[idx])buttons[idx].classList.add('active');
+       showFloorControls(b);
+       if(floorIndex!==null)selectFloor(b,floorIndex);
+       else {target.set(b.x,b.floors*levelH*.38,b.z);radius=25;updateCamera();}
+     }
+     break;
+   }
+ }
+});
+canvas.addEventListener('pointercancel',()=>dragging=false);
+canvas.addEventListener('wheel',e=>{
+ e.preventDefault();
+ radius=Math.max(16,Math.min(58,radius+e.deltaY*.035));
+ updateCamera();
+},{passive:false});
+function resize(){let w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}window.addEventListener('resize',resize);
+const clock=new THREE.Clock();function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime;if(!paused){people.forEach(p=>{p.userData.wait-=dt;if(p.userData.wait>0)return;
+ if(p.userData.opdFlow){
+  const route=p.userData.opdWaypoints,i=p.userData.opdRoute,goal=route[(i+1)%route.length];
+  const dx=goal[0]-p.position.x,dz=goal[1]-p.position.z,d=Math.hypot(dx,dz);
+  if(d<.18){p.userData.opdRoute=(i+1)%route.length;p.userData.wait=(i===2||i===3||i===4)?Math.random()*2.8+1:Math.random()*.7}
+  else{const step=Math.min(d,p.userData.speed*dt);p.position.x+=dx/d*step;p.position.z+=dz/d*step;p.rotation.y=Math.atan2(dx,dz);p.userData.legs.forEach((l,k)=>l.rotation.x=Math.sin(t*8+p.userData.phase+k*Math.PI)*.45)}
+  return;
+ }
+ let i=p.userData.routeIndex,goal=routes[(i+1)%routes.length],gx=goal[0],gz=goal[1];let dx=gx-p.position.x,dz=gz-p.position.z,d=Math.hypot(dx,dz);if(d<.25){p.userData.routeIndex=(i+1)%routes.length;p.userData.wait=Math.random()*1.6+0.4}else{let step=Math.min(d,p.userData.speed*dt);p.position.x+=dx/d*step;p.position.z+=dz/d*step;p.rotation.y=Math.atan2(dx,dz);p.userData.legs.forEach((l,k)=>l.rotation.x=Math.sin(t*8+p.userData.phase+k*Math.PI)*.45)}})}renderer.render(scene,camera)}animate();
+</script></body></html>
