@@ -286,7 +286,7 @@ function addOpdVisitor(startInside=false){
 for(let i=0;i<8;i++)addOpdVisitor(i>=4);
 
 function updateStats(){document.getElementById('peopleNum').textContent=people.length;document.getElementById('waitingNum').textContent=people.filter(p=>p.userData.wait>0).length}
-buildings.forEach((b,i)=>{let el=document.createElement('button');el.className='building'+(i===0?' active':'');el.innerHTML='<span class="swatch" style="background:'+b.color+'"></span><span><strong>'+b.name+'</strong><small>'+b.floorText.join(' / ')+'</small></span>';el.onclick=()=>{document.querySelectorAll('.building').forEach(x=>x.classList.remove('active'));el.classList.add('active');target.set(b.x,b.floors*levelH*.38,b.z);radius=25;updateCamera();showFloorControls(b)};document.getElementById('buildingList').appendChild(el)});
+buildings.forEach((b,i)=>{let el=document.createElement('button');el.className='building'+(i===0?' active':'');el.innerHTML='<span class="swatch" style="background:'+b.color+'"></span><span><strong>'+b.name+'</strong><small>'+b.floorText.join(' / ')+'</small></span>';el.onclick=()=>{document.querySelectorAll('.building').forEach(x=>x.classList.remove('active'));el.classList.add('active');selectedBuilding=b;selectedFloor=-1;applyFloorVisibility();target.set(b.x,b.floors*levelH*.38,b.z);radius=25;updateCamera();showFloorControls(b)};document.getElementById('buildingList').appendChild(el)});
 let selectedBuilding=buildings[0],selectedFloor=-1;
 function updateFloorCount(b,f){
  const holder=document.getElementById('floorControls');
@@ -378,10 +378,33 @@ function showPatientDetails(b,patient){
  '<div class="muted">ภาพประกอบและข้อมูลสมมติสำหรับสาธิตเท่านั้น</div>';
  patientModalShell('ข้อมูลผู้ป่วยจำลอง',content,patient.arrivalTime);
 }
+function applyFloorVisibility(){
+ // When a specific floor is selected, isolate that building and that floor.
+ roomGroups.forEach(record=>{
+   const isSelectedBuilding=record.building.id===selectedBuilding.id;
+   record.group.visible=(selectedFloor<0 ? true : isSelectedBuilding);
+   record.floorGroups.forEach((g,i)=>{
+     g.visible=(selectedFloor<0 || !isSelectedBuilding) ? true : i===selectedFloor;
+   });
+   // Hide roof, stair core and exterior extras while viewing an individual floor.
+   record.group.children.forEach(child=>{
+     if(!record.floorGroups.includes(child)) child.visible=(selectedFloor<0);
+   });
+ });
+ people.forEach(p=>{
+   if(selectedFloor<0){p.visible=true;return;}
+   // For OPD floor 1, show only visitors currently inside the OPD floor footprint.
+   const insideOpdFloor1=selectedBuilding.id==='opd' && selectedFloor===0 && p.userData.opdFlow &&
+     p.position.x>=selectedBuilding.x-selectedBuilding.w/2 &&
+     p.position.x<=selectedBuilding.x+selectedBuilding.w/2 &&
+     p.position.z>=selectedBuilding.z-selectedBuilding.d/2 &&
+     p.position.z<=selectedBuilding.z+selectedBuilding.d/2;
+   p.visible=insideOpdFloor1;
+ });
+}
 function selectFloor(b,f){
  selectedBuilding=b;selectedFloor=f;
- const record=roomGroups.find(x=>x.building.id===b.id);
- record.floorGroups.forEach(g=>g.visible=true); // Keep every floor visible; selection only changes the information overlay.
+ applyFloorVisibility();
  const holder=document.getElementById('floorControls');
  holder.querySelectorAll('.floorBtn').forEach((x,i)=>x.classList.toggle('active',i===(f<0?0:f+1)));
  updateFloorCount(b,f);
@@ -400,7 +423,7 @@ function showFloorControls(b){
  updateFloorCount(b,-1);
  updateFloorRoster(b,-1);
 }
-showFloorControls(buildings[0]);
+showFloorControls(buildings[0]);applyFloorVisibility();
 let paused=false;document.getElementById('pause').onclick=()=>{paused=!paused;document.getElementById('pause').textContent=paused?'▶ เล่นต่อ':'Ⅱ หยุด'};
 document.getElementById('reset').onclick=()=>{people.forEach(p=>scene.remove(p));people.length=0;for(let i=0;i<18;i++)addPerson();for(let i=0;i<8;i++)addOpdVisitor(i>=4);paused=false;document.getElementById('pause').textContent='Ⅱ หยุด'};
 document.getElementById('add').onclick=()=>{for(let i=0;i<5;i++)addPerson()};
@@ -468,5 +491,5 @@ const clock=new THREE.Clock();function animate(){requestAnimationFrame(animate);
   else{const step=Math.min(d,p.userData.speed*dt);p.position.x+=dx/d*step;p.position.z+=dz/d*step;p.rotation.y=Math.atan2(dx,dz);p.userData.legs.forEach((l,k)=>l.rotation.x=Math.sin(t*8+p.userData.phase+k*Math.PI)*.45)}
   return;
  }
- let i=p.userData.routeIndex,goal=routes[(i+1)%routes.length],gx=goal[0],gz=goal[1];let dx=gx-p.position.x,dz=gz-p.position.z,d=Math.hypot(dx,dz);if(d<.25){p.userData.routeIndex=(i+1)%routes.length;p.userData.wait=Math.random()*1.6+0.4}else{let step=Math.min(d,p.userData.speed*dt);p.position.x+=dx/d*step;p.position.z+=dz/d*step;p.rotation.y=Math.atan2(dx,dz);p.userData.legs.forEach((l,k)=>l.rotation.x=Math.sin(t*8+p.userData.phase+k*Math.PI)*.45)}})}renderer.render(scene,camera)}animate();
+ let i=p.userData.routeIndex,goal=routes[(i+1)%routes.length],gx=goal[0],gz=goal[1];let dx=gx-p.position.x,dz=gz-p.position.z,d=Math.hypot(dx,dz);if(d<.25){p.userData.routeIndex=(i+1)%routes.length;p.userData.wait=Math.random()*1.6+0.4}else{let step=Math.min(d,p.userData.speed*dt);p.position.x+=dx/d*step;p.position.z+=dz/d*step;p.rotation.y=Math.atan2(dx,dz);p.userData.legs.forEach((l,k)=>l.rotation.x=Math.sin(t*8+p.userData.phase+k*Math.PI)*.45)}})}applyFloorVisibility();renderer.render(scene,camera)}animate();
 </script></body></html>
